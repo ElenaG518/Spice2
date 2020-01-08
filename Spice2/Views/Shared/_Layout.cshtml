@@ -28,7 +28,7 @@
                                 <a class="dropdown-item" asp-action="Index" asp-controller="Category" asp-area="Admin">Category</a>
                                 <a class="dropdown-item" asp-action="Index" asp-controller="SubCategory" asp-area="Admin">Sub Category</a>
                                 <a class="dropdown-item" asp-action="Index" asp-controller="MenuItem" asp-area="Admin">MenuItem</a>
-                                <a class="dropdown-item">Coupons</a>
+                                <a class="dropdown-item" asp-action="Index" asp-controller="Coupon" asp-area="Admin">Coupons</a>
                                 <a class="dropdown-item">Users</a>
                             </div>
                         </li>
@@ -60,7 +60,8 @@
     </footer>
     <script src="https://cdn.tiny.cloud/1/o19h4w5766ud0ez25f7qa0sd4ni0p3lzcwebtc2rr4a1qois/tinymce/5/tinymce.min.js"></script>
 
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js">
+    </script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     @RenderSection("Scripts", required: false)

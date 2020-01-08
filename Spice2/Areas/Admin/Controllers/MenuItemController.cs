@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Spice2.Data;
+using Spice2.Models;
 using Spice2.Models.ViewModels;
 using Spice2.Utility;
 
@@ -116,7 +117,7 @@ namespace Spice2.Areas.Admin.Controllers
             {
                 return NotFound();
             }
-            
+
             MenuItemVM.MenuItem.SubCategoryId = Convert.ToInt32(Request.Form["SubCategoryId"].ToString());
 
             if (!ModelState.IsValid)
@@ -177,7 +178,6 @@ namespace Spice2.Areas.Admin.Controllers
             }
 
             MenuItemVM.MenuItem = await _db.MenuItem.Include(m => m.Category).Include(m => m.SubCategory).SingleOrDefaultAsync(m => m.Id == id);
-            //MenuItemVM.SubCategory = await _db.SubCategory.Where(s => s.CategoryId == MenuItemVM.MenuItem.CategoryId).ToListAsync();
 
             if (MenuItemVM.MenuItem == null)
             {
@@ -196,7 +196,6 @@ namespace Spice2.Areas.Admin.Controllers
             }
 
             MenuItemVM.MenuItem = await _db.MenuItem.Include(m => m.Category).Include(m => m.SubCategory).SingleOrDefaultAsync(m => m.Id == id);
-            MenuItemVM.SubCategory = await _db.SubCategory.Where(s => s.CategoryId == MenuItemVM.MenuItem.CategoryId).ToListAsync();
 
             if (MenuItemVM.MenuItem == null)
             {
@@ -206,64 +205,29 @@ namespace Spice2.Areas.Admin.Controllers
             return View(MenuItemVM);
         }
 
+        //POST Delete MenuItem
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeletePOST(int? id)
+        public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            MenuItemVM.MenuItem.SubCategoryId = Convert.ToInt32(Request.Form["SubCategoryId"].ToString());
-
-            if (!ModelState.IsValid)
-            {
-                MenuItemVM.SubCategory = await _db.SubCategory.Where(s => s.CategoryId == MenuItemVM.MenuItem.CategoryId).ToListAsync();
-                return View(MenuItemVM);
-            }
-
-            //Work on the image saving section
-
             string webRootPath = _webHostEnvironment.WebRootPath;
-            var files = HttpContext.Request.Form.Files;
+            var menuItemFromDb = await _db.MenuItem.FindAsync(id);
 
-            var menuItemFromDb = await _db.MenuItem.FindAsync(MenuItemVM.MenuItem.Id);
-
-            if (files.Count > 0)
+            if (menuItemFromDb != null)
             {
-                //New Image has been uploaded
-
-                var uploads = Path.Combine(webRootPath, "images");
-                var extension_new = Path.GetExtension(files[0].FileName);
-
-                //Delete the original file
                 var imagePath = Path.Combine(webRootPath, menuItemFromDb.Image.TrimStart('\\'));
 
                 if (System.IO.File.Exists(imagePath))
                 {
                     System.IO.File.Delete(imagePath);
                 }
-
-                //we will upload the new file
-                using (var filesStream = new FileStream(Path.Combine(uploads, MenuItemVM.MenuItem.Id + extension_new), FileMode.Create))
-                {
-                    files[0].CopyTo(filesStream);
-                }
-                menuItemFromDb.Image = @"\images\" + MenuItemVM.MenuItem.Id + extension_new;
+                _db.MenuItem.Remove(menuItemFromDb);
+                await _db.SaveChangesAsync();
 
             }
-
-            menuItemFromDb.Name = MenuItemVM.MenuItem.Name;
-            menuItemFromDb.Description = MenuItemVM.MenuItem.Description;
-            menuItemFromDb.Price = MenuItemVM.MenuItem.Price;
-            menuItemFromDb.Spicyness = MenuItemVM.MenuItem.Spicyness;
-            menuItemFromDb.CategoryId = MenuItemVM.MenuItem.CategoryId;
-            menuItemFromDb.SubCategoryId = MenuItemVM.MenuItem.SubCategoryId;
-
-            await _db.SaveChangesAsync();
 
             return RedirectToAction(nameof(Index));
         }
     }
 }
+
