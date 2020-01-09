@@ -41,7 +41,7 @@ namespace Spice2.Areas.Identity.Pages.Account
             _logger = logger;
             _emailSender = emailSender;
             _roleManager = roleManager;
-    }
+        }
 
         [BindProperty]
         public InputModel Input { get; set; }
@@ -90,12 +90,15 @@ namespace Spice2.Areas.Identity.Pages.Account
 
         public async Task<IActionResult> OnPostAsync(string returnUrl = null)
         {
+            string role = Request.Form["rdUserRole"].ToString();
+
+
             returnUrl = returnUrl ?? Url.Content("~/");
             ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
             if (ModelState.IsValid)
             {
-                var user = new ApplicationUser 
-                { 
+                var user = new ApplicationUser
+                {
                     UserName = Input.Email,
                     Email = Input.Email,
                     Name = Input.Name,
@@ -104,13 +107,14 @@ namespace Spice2.Areas.Identity.Pages.Account
                     State = Input.State,
                     PostalCode = Input.PostalCode,
                     PhoneNumber = Input.PhoneNumber
-                
+
                 };
 
                 var result = await _userManager.CreateAsync(user, Input.Password);
                 if (result.Succeeded)
                 {
-                    if (!await _roleManager.RoleExistsAsync(Utility.SD.CustomerEndUser)) {
+                    if (!await _roleManager.RoleExistsAsync(Utility.SD.CustomerEndUser))
+                    {
                         await _roleManager.CreateAsync(new IdentityRole(SD.CustomerEndUser));
                     }
                     if (!await _roleManager.RoleExistsAsync(Utility.SD.ManagerUser))
@@ -126,9 +130,36 @@ namespace Spice2.Areas.Identity.Pages.Account
                         await _roleManager.CreateAsync(new IdentityRole(SD.KitchenUser));
                     }
 
-                    await _userManager.AddToRoleAsync(user, SD.ManagerUser);
 
-                    //_logger.LogInformation("User created a new account with password.");
+                    if (role == SD.KitchenUser)
+                    {
+                        await _userManager.AddToRoleAsync(user, SD.KitchenUser);
+                    }
+                    else
+                    {
+                        if (role == SD.FrontDeskUser)
+                        {
+                            await _userManager.AddToRoleAsync(user, SD.FrontDeskUser);
+                        }
+                        else
+                        {
+                            if (role == SD.ManagerUser)
+                            {
+                                await _userManager.AddToRoleAsync(user, SD.ManagerUser);
+                            }
+                            else
+                            {
+                                await _userManager.AddToRoleAsync(user, SD.CustomerEndUser);
+                                await _signInManager.SignInAsync(user, isPersistent: false);
+                                return LocalRedirect(returnUrl);
+                            }
+                        }
+
+                    }
+
+                    return RedirectToAction("Index", "User", new { area = "Admin" });
+
+                    _logger.LogInformation("User created a new account with password.");
 
                     //var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
                     //code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
@@ -147,10 +178,11 @@ namespace Spice2.Areas.Identity.Pages.Account
                     //}
                     //else
                     //{
-                        await _signInManager.SignInAsync(user, isPersistent: false);
-                        return LocalRedirect(returnUrl);
+
+
                     //}
                 }
+
                 foreach (var error in result.Errors)
                 {
                     ModelState.AddModelError(string.Empty, error.Description);
