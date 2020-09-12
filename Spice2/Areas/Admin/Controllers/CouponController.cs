@@ -3,13 +3,16 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Spice2.Data;
 using Spice2.Models;
+using Spice2.Utility;
 
 namespace Spice2.Areas.Admin.Controllers
 {
+    [Authorize(Roles = SD.ManagerUser)]
     [Area("Admin")]
     public class CouponController : Controller
     {
@@ -114,7 +117,7 @@ namespace Spice2.Areas.Admin.Controllers
                 couponFromDb.CouponType = coupons.CouponType;
                 couponFromDb.Discount = coupons.Discount;
                 couponFromDb.MinimumAmount = coupons.MinimumAmount;
-                couponFromDb.isActive = coupons.isActive;
+                couponFromDb.IsActive = coupons.IsActive;
 
 
 
